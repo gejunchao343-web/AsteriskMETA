@@ -12,3 +12,4 @@ dns-rules:
   - DOMAIN,ntp1.aliyun.com,REJECT
   - DOMAIN,jp.pool.ntp.org,DIRECT
   - DOMAIN,sg.pool.ntp.org,DIRECT
+  # trigger build
