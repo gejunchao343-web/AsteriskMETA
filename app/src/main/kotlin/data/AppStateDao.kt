@@ -15,11 +15,20 @@ internal abstract class AppStateDao {
     @Transaction
     open suspend fun loadState(): PersistedAppState {
         return PersistedAppState(
-            mihomoProfiles = findMihomoProfiles(),
-            mihomoOverrideScripts = findMihomoOverrideScripts(),
-            proxyAppListSelectedApps = findProxyAppListSelectedApps(),
-        )
-    }
+            mihomoProfiles = listOf(
+    MihomoProfileEntity(
+        id = -1,
+        position = -1,
+        name = "内置配置",
+        type = 0,
+        url = "asset://default.yaml",
+        userAgent = "",
+        hwid = "",
+        updateInterval = "",
+        updateViaProxy = false,
+        ageSecretKey = ""
+    )
+) + findMihomoProfiles(),
 
     @Transaction
     open suspend fun saveState(previousState: AppState, nextState: AppState, replaceAll: Boolean) {
