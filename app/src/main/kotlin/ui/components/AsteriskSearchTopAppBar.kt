@@ -3,6 +3,7 @@
 
 package ui.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -31,6 +32,7 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import app.R
 import ui.layout.pageHorizontalPadding
+import ui.theme.AsteriskMotion
 import ui.icons.AsteriskIcons as Icons
 
 @Composable
@@ -68,6 +70,7 @@ internal fun AsteriskSearchTopAppBar(
         if (!searchAvailable && searchActive) closeSearch()
     }
 
+    // Outgoing content remains composed during the fade, but must not handle back events.
     if (searchActive && searchAvailable) {
         val backState = rememberNavigationEventState(NavigationEventInfo.None)
         NavigationBackHandler(
@@ -75,38 +78,61 @@ internal fun AsteriskSearchTopAppBar(
             isBackEnabled = true,
             onBackCompleted = { closeSearch() },
         )
-        val focusRequester = remember { FocusRequester() }
-        LaunchedEffect(Unit) { focusRequester.requestFocus() }
-        AsteriskTopAppBar(
-            modifier = modifier,
-            scrollBehavior = scrollBehavior,
-            navigationIcon = {
-                IconButton(onClick = { closeSearch() }) {
-                    Icon(
-                        Icons.AutoMirrored.Rounded.ArrowBack,
-                        stringResource(R.string.common_back),
-                    )
-                }
-            },
-            title = {
-                searchField(Modifier.fillMaxWidth().focusRequester(focusRequester))
-            },
-        )
-    } else {
-        AsteriskTopAppBar(
-            title = title,
-            modifier = modifier,
-            navigationIcon = navigationIcon,
-            scrollBehavior = scrollBehavior,
-            actions = {
-                if (searchAvailable) {
-                    IconButton(onClick = { searchActive = true }) {
-                        Icon(Icons.Rounded.Search, stringResource(R.string.common_search))
+    }
+
+    AsteriskSearchTopBarTransition(searchActive = searchActive && searchAvailable) { showSearch ->
+        if (showSearch) {
+            val focusRequester = remember { FocusRequester() }
+            LaunchedEffect(searchActive, searchAvailable) {
+                if (searchActive && searchAvailable) focusRequester.requestFocus()
+            }
+            AsteriskTopAppBar(
+                modifier = modifier,
+                scrollBehavior = scrollBehavior,
+                navigationIcon = {
+                    IconButton(onClick = { closeSearch() }) {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            stringResource(R.string.common_back),
+                        )
                     }
-                }
-                actions()
-            },
-        )
+                },
+                title = {
+                    searchField(Modifier.fillMaxWidth().focusRequester(focusRequester))
+                },
+            )
+        } else {
+            AsteriskTopAppBar(
+                title = title,
+                modifier = modifier,
+                navigationIcon = navigationIcon,
+                scrollBehavior = scrollBehavior,
+                actions = {
+                    if (searchAvailable) {
+                        IconButton(onClick = { searchActive = true }) {
+                            Icon(Icons.Rounded.Search, stringResource(R.string.common_search))
+                        }
+                    }
+                    actions()
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun AsteriskSearchTopBarTransition(
+    searchActive: Boolean,
+    content: @Composable (Boolean) -> Unit,
+) {
+    val effectsSpec = AsteriskMotion.fastEffects<Float>()
+    val fadeTransition = AsteriskMotion.fadeThrough<Boolean>(effectsSpec)
+    AnimatedContent(
+        targetState = searchActive,
+        transitionSpec = { fadeTransition().using(null) },
+        label = "search-top-bar",
+    ) { showSearch ->
+        content(showSearch)
     }
 }
 
